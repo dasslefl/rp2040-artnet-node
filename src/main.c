@@ -6,12 +6,15 @@
 #include "pico/stdlib.h"
 
 #include "eth_lwip.h"
+#include "eth.h"
 
 #include "lwip/dhcp.h"
 #include "lwip/init.h"
 #include "lwip/udp.h"
 
-static struct udp_pcb *udpecho_raw_pcb;
+#include "hd44780_spi.h"
+
+static uint lcd_update_timer = 0;
 
 void netif_link_callback(struct netif *netif) {
     printf("netif link status changed %s\n", netif_is_link_up(netif) ? "up" : "down");
@@ -21,14 +24,26 @@ void netif_status_callback(struct netif *netif) {
     printf("netif status changed %s\n", ip4addr_ntoa(netif_ip4_addr(netif)));
 }
 
+
 int main() {
     struct netif netif;
     // Also runs stdio init
     eth_lwip_init(&netif);
 
-    sleep_ms(5000);
+    gpio_init(PICO_DEFAULT_LED_PIN);
+    gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
 
-    printf("UDP Neopixel Driver\n");
+    lcd_init(16, 2, LCD_5x8DOTS);
+
+    lcd_puts("PicoNode");
+    lcd_set_cursor(0, 1);
+    lcd_puts(__DATE__);
+
+    printf("PicoNode\n");
+
+    sleep_ms(2000);
+
+    lcd_clear();
 
     // assign callbacks for link and status
     netif_set_link_callback(&netif, netif_link_callback);
@@ -43,5 +58,32 @@ int main() {
     
     while (true) {
         eth_lwip_poll();
+
+        if(eth_every_ms(&lcd_update_timer, 500)) {
+            gpio_put(PICO_DEFAULT_LED_PIN, 1);
+            lcd_set_cursor(0, 0);
+            lcd_puts(netif_is_link_up(&netif) ? "Link: UP  " : "Link: DOWN");
+            lcd_set_cursor(0, 1);
+            lcd_puts(netif_is_link_up(&netif) ? ip4addr_ntoa(netif_ip4_addr(&netif)) : "                ");
+            gpio_put(PICO_DEFAULT_LED_PIN, 0);
+        }
     }
 }
+
+
+/*
+int main() {
+
+    stdio_init_all();
+
+    gpio_init(PICO_DEFAULT_LED_PIN);
+    gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
+
+    while(true) {
+        gpio_put(PICO_DEFAULT_LED_PIN, !gpio_get(PICO_DEFAULT_LED_PIN));
+        lcd_init(16, 2, LCD_5x8DOTS);
+        lcd_write('A');
+        sleep_ms(200);
+    }
+
+}*/

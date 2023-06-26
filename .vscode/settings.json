@@ -1,6 +1,8 @@
 {
     "files.associations": {
         "pio.h": "c",
-        "def.h": "c"
+        "def.h": "c",
+        "stdlib.h": "c",
+        "eth.h": "c"
     }
 }
