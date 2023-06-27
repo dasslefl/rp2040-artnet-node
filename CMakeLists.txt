@@ -13,9 +13,11 @@ add_subdirectory("lib/rp2040-rmii")
 add_executable(rp2040_artnet_node
     src/main.c
     src/hd44780_spi.c
+    src/dmx_output.c
+    src/artnet.c
 )
 
-# pico_generate_pio_header(rp2040_artnet_node ${CMAKE_CURRENT_LIST_DIR}/src/ws2812.pio)
+pico_generate_pio_header(rp2040_artnet_node ${CMAKE_CURRENT_LIST_DIR}/src/dmx_output.pio)
 
 target_link_libraries(rp2040_artnet_node pico_stdlib rp2040_rmii hardware_pio hardware_dma hardware_irq hardware_spi)
 

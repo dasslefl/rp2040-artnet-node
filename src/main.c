@@ -13,6 +13,8 @@
 #include "lwip/udp.h"
 
 #include "hd44780_spi.h"
+#include "dmx_output.h"
+#include "artnet.h"
 
 static uint lcd_update_timer = 0;
 
@@ -23,7 +25,6 @@ void netif_link_callback(struct netif *netif) {
 void netif_status_callback(struct netif *netif) {
     printf("netif status changed %s\n", ip4addr_ntoa(netif_ip4_addr(netif)));
 }
-
 
 int main() {
     struct netif netif;
@@ -55,35 +56,18 @@ int main() {
 
     // Start DHCP client
     dhcp_start(&netif);
+
+    artnet_init();
     
     while (true) {
         eth_lwip_poll();
 
         if(eth_every_ms(&lcd_update_timer, 500)) {
-            gpio_put(PICO_DEFAULT_LED_PIN, 1);
             lcd_set_cursor(0, 0);
             lcd_puts(netif_is_link_up(&netif) ? "Link: UP  " : "Link: DOWN");
             lcd_set_cursor(0, 1);
             lcd_puts(netif_is_link_up(&netif) ? ip4addr_ntoa(netif_ip4_addr(&netif)) : "                ");
-            gpio_put(PICO_DEFAULT_LED_PIN, 0);
         }
     }
 }
 
-
-/*
-int main() {
-
-    stdio_init_all();
-
-    gpio_init(PICO_DEFAULT_LED_PIN);
-    gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
-
-    while(true) {
-        gpio_put(PICO_DEFAULT_LED_PIN, !gpio_get(PICO_DEFAULT_LED_PIN));
-        lcd_init(16, 2, LCD_5x8DOTS);
-        lcd_write('A');
-        sleep_ms(200);
-    }
-
-}*/
